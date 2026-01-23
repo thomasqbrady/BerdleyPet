@@ -875,6 +875,14 @@ const unsigned char berdley_dark_25 [] PROGMEM = {
 // Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = 5760)
 const unsigned char* light_bitmaps[25] = {
 	berdley_light_1,
+	berdley_light_2,
+	berdley_light_3,
+	berdley_light_4,
+	berdley_light_5,
+	berdley_light_6,
+	berdley_light_7,
+	berdley_light_8,
+	berdley_light_9,
 	berdley_light_10,
 	berdley_light_11,
 	berdley_light_12,
@@ -885,20 +893,12 @@ const unsigned char* light_bitmaps[25] = {
 	berdley_light_17,
 	berdley_light_18,
 	berdley_light_19,
-	berdley_light_2,
 	berdley_light_20,
 	berdley_light_21,
 	berdley_light_22,
 	berdley_light_23,
 	berdley_light_24,
-	berdley_light_25,
-	berdley_light_3,
-	berdley_light_4,
-	berdley_light_5,
-	berdley_light_6,
-	berdley_light_7,
-	berdley_light_8,
-	berdley_light_9
+	berdley_light_25
 };
 
 // Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = 6000)
@@ -931,9 +931,9 @@ const unsigned char* dark_bitmaps[25] = {
 };
 
 const char* berdley_quotes[] = {
-    "This valiant warrior of brave intelligence\nWill be your knight in glow in the dark armor!",
-    "That's LORD Berdly to you simpletons!!\nAnd soon... SUPER Lord Berdly!",
-    "WE... will soon RULE the WORLD!\nAnd turn this Land of Fools... into a Smartopia.",
+    "This valiant warrior of brave intelligence will be your knight in glow in the dark armor!",
+    "That's LORD Berdly to you simpletons!! And soon... SUPER Lord Berdly!",
+    "WE... will soon RULE the WORLD! And turn this Land of Fools... into a Smartopia.",
     "Our power... The \"Light Nerd's\" power...",
     "I must admit, I feel pity for you.",
     "Join our side, and I might let you scrub our royal toilet!",
@@ -944,38 +944,89 @@ const char* berdley_quotes[] = {
     "You feel... forced, don't you?",
     "Holy Halbird! Grant me strength!",
     "D-damn it!",
-    "Go easier!? Ha! Haha! Hahaha!\nThe only one going easy mode, was me!",
+    "Go easier!? Ha! Haha! Hahaha! The only one going easy mode, was me!",
     "I'm only tired of HOLDING BACK MY TRUE POWER!",
     "Try hard, and maybe someday you'll be a worthy rival.",
     "Heh! Sometimes I can't believe how cool I am..."
 };
 
 void setup() {
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // here the 0x3c is the I2C address, check your i2c address if u have multiple devices.
+  delay(2000);  // Safety delay for programming
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.clearDisplay();
   delay(2000);
 }
 
 void loop() {
-    int randomIndex = random(0, 25);
-    static int lastIndex = -1;
-    int randomDelay = random(300, 9001);
-    do {
-        randomIndex = random(0, 25);
-    } while (randomIndex == lastIndex);
-    lastIndex = randomIndex;
+    static int currentSprite = 0;
+    static int currentQuote = 0;
+    static unsigned long lastSpriteTime = 0;
+    static unsigned long lastQuoteTime = 0;
+    static unsigned long lastScrollTime = 0;
+    static unsigned long spriteInterval = 500;
+    static int scrollX = 0;
+    static unsigned long scrollStartTime = 0;
+    static bool scrolling = false;
+    static bool waitingForNext = false;
+    static unsigned long scrolledOffTime = 0;
+
+    unsigned long now = millis();
+
+    // Change sprite on random interval (300-900ms)
+    if (now - lastSpriteTime >= spriteInterval) {
+        int newSprite;
+        do {
+            newSprite = random(0, 25);
+        } while (newSprite == currentSprite);
+        currentSprite = newSprite;
+        spriteInterval = random(300, 9001);
+        lastSpriteTime = now;
+    }
+
+    // Show next quote after waiting 3 seconds
+    if (waitingForNext && (now - scrolledOffTime >= 3000)) {
+        int newQuote;
+        do {
+            newQuote = random(0, 17);
+        } while (newQuote == currentQuote);
+        currentQuote = newQuote;
+        scrollX = 0;  // Start text visible
+        scrolling = false;  // Wait before scrolling
+        waitingForNext = false;
+        scrollStartTime = now;
+    }
+
+    // Start scrolling after 2 seconds
+    if (!scrolling && !waitingForNext && (now - scrollStartTime >= 2000)) {
+        scrolling = true;
+    }
+
+    // Scroll text every 40ms
+    if (scrolling && (now - lastScrollTime >= 40)) {
+        scrollX -= 2;
+        // Get text width (each char is ~6 pixels wide at size 1)
+        int textLen = strlen(berdley_quotes[currentQuote]);
+        int textWidth = textLen * 6;
+        if (scrollX < -textWidth) {
+            scrolling = false;
+            waitingForNext = true;
+            scrolledOffTime = now;
+        }
+        lastScrollTime = now;
+    }
+
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
-    display.setCursor(2, 48);
-    static int lastQuoteIndex = -1;
-    int quoteIndex;
-    do {
-        quoteIndex = random(0, 17);
-    } while (quoteIndex == lastQuoteIndex);
-    lastQuoteIndex = quoteIndex;
-    display.println(berdley_quotes[quoteIndex]);
-    display.drawBitmap(0, 0, light_bitmaps[randomIndex], 46, 37, WHITE);
+    display.setTextWrap(false);
+    display.setCursor(scrollX, 48);
+    display.print(berdley_quotes[currentQuote]);
+		int x = 41;
+		int y = 0;
+		if (currentSprite == 2) {
+			x = 36;
+			y = 4;
+		}
+    display.drawBitmap(x, y, light_bitmaps[currentSprite], 46, 37, WHITE);
     display.display();
-    delay(randomDelay);
 }

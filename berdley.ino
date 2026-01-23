@@ -1024,8 +1024,8 @@ void loop() {
 		int x = 41;
 		int y = 0;
 		if (currentSprite == 2) {
-			x = 36;
-			y = 4;
+			x = 38;
+			y = 8;
 		}
     display.drawBitmap(x, y, light_bitmaps[currentSprite], 46, 37, WHITE);
     display.display();

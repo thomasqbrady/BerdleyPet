@@ -7,8 +7,8 @@
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
 // Declaration for SSD1306 display connected using software SPI (default case):
-#define OLED_MOSI   11
-#define OLED_CLK    13
+#define OLED_MOSI   16
+#define OLED_CLK    15
 #define OLED_DC     8
 #define OLED_CS     10
 #define OLED_RESET  9
